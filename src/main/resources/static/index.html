@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockPilot — Inventory & Warehouse Management</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">✈</div>
+        <div>
+          <h1>StockPilot</h1>
+          <span class="subtitle">Real-time Warehouse Inventory & Order Dispatch</span>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="status-pill live">● System Online</span>
+        <span class="status-pill db">H2 In-Memory</span>
+      </div>
+    </header>
+
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('inventory-tab')">📦 Inventory Allocation</button>
+      <button class="nav-tab" onclick="switchTab('orders-tab')">📋 Orders & Fulfillment</button>
+      <button class="nav-tab" onclick="switchTab('movements-tab')">🔄 Movement Ledger</button>
+    </nav>
+
+    <main class="content-body">
+      <!-- INVENTORY SECTION -->
+      <section id="inventory-tab" class="tab-content active">
+        <div class="card-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Warehouse Inventory Levels</h2>
+              <button class="btn btn-secondary" onclick="loadInventory()">Refresh</button>
+            </div>
+            <div class="table-container">
+              <table id="inventory-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Warehouse</th>
+                    <th>Available Stock</th>
+                    <th>Reserved Stock</th>
+                    <th>Unit Price</th>
+                  </tr>
+                </thead>
+                <tbody id="inventory-tbody">
+                  <tr><td colspan="5" class="text-center">Loading stock data...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel side-panel">
+            <div class="panel-header">
+              <h2>Quick Stock Adjustment</h2>
+            </div>
+            <form id="stock-form" onsubmit="handleStockAdjust(event)">
+              <div class="form-group">
+                <label for="adjust-product">Product</label>
+                <select id="adjust-product" required></select>
+              </div>
+              <div class="form-group">
+                <label for="adjust-warehouse">Warehouse</label>
+                <select id="adjust-warehouse" required></select>
+              </div>
+              <div class="form-group">
+                <label for="adjust-quantity">Delta Quantity (positive or negative)</label>
+                <input type="number" id="adjust-quantity" placeholder="e.g. +10 or -5" required>
+              </div>
+              <div class="form-group">
+                <label for="adjust-reason">Reason</label>
+                <input type="text" id="adjust-reason" placeholder="Inbound shipment, restock, scrap..." required>
+              </div>
+              <button type="submit" class="btn btn-primary full-width">Update Inventory</button>
+              <div id="adjust-msg" class="notification-msg"></div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ORDERS SECTION -->
+      <section id="orders-tab" class="tab-content">
+        <div class="card-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Customer Orders</h2>
+              <div class="filter-controls">
+                <select id="order-status-filter" onchange="loadOrders()">
+                  <option value="ALL">All Statuses</option>
+                  <option value="CONFIRMED">CONFIRMED</option>
+                  <option value="SHIPPED">SHIPPED</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                </select>
+                <button class="btn btn-secondary" onclick="loadOrders()">Refresh</button>
+              </div>
+            </div>
+            <div class="table-container">
+              <table id="orders-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-tbody">
+                  <tr><td colspan="6" class="text-center">Loading orders...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel side-panel">
+            <div class="panel-header">
+              <h2>Create New Order</h2>
+            </div>
+            <form id="order-form" onsubmit="handleCreateOrder(event)">
+              <div class="form-group">
+                <label for="order-customer">Customer Name</label>
+                <input type="text" id="order-customer" placeholder="e.g. John Doe" required>
+              </div>
+              <div class="form-group">
+                <label for="order-product">Product to Reserve</label>
+                <select id="order-product" required></select>
+              </div>
+              <div class="form-group">
+                <label for="order-warehouse">Fulfill From Warehouse</label>
+                <select id="order-warehouse" required></select>
+              </div>
+              <div class="form-group">
+                <label for="order-quantity">Quantity</label>
+                <input type="number" id="order-quantity" min="1" value="1" required>
+              </div>
+              <button type="submit" class="btn btn-primary full-width">Place & Reserve Order</button>
+              <div id="order-msg" class="notification-msg"></div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- MOVEMENTS SECTION -->
+      <section id="movements-tab" class="tab-content">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Inventory Movement Audit Log</h2>
+            <button class="btn btn-secondary" onclick="loadMovements()">Refresh Ledger</button>
+          </div>
+          <div class="table-container">
+            <table id="movements-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Product</th>
+                  <th>Warehouse</th>
+                  <th>Type</th>
+                  <th>Quantity</th>
+                  <th>Order Reference</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="movements-tbody">
+                <tr><td colspan="7" class="text-center">Loading ledger movements...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

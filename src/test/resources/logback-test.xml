@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Turn off root logging in test so stdout only gets clean JSON -->
+    <root level="OFF">
+    </root>
+</configuration>
