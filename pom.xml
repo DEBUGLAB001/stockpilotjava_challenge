@@ -75,10 +75,10 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <testFailureIgnore>false</testFailureIgnore>
-                    <useFile>true</useFile>
+                    <testFailureIgnore>true</testFailureIgnore>
+                    <useFile>false</useFile>
                     <printSummary>false</printSummary>
-                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <redirectTestOutputToFile>false</redirectTestOutputToFile>
                 </configuration>
             </plugin>
         </plugins>

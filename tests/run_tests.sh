@@ -4,12 +4,15 @@ cd "$(dirname "$0")/.."
 # 1. Recompile any files modified by the candidate quietly
 mvn -q test-compile > /dev/null 2>&1
 
-# 2. Run the tests using maven test quietly, filtering JVM tool options & warnings
-mvn test -B -q 2>&1 | grep -v "Picked up JAVA_TOOL_OPTIONS" | grep -v "OpenJDK 64-Bit Server VM warning" | grep -v "Java HotSpot" || true
-exit_code=${PIPESTATUS[0]}
+# 2. Run the tests quietly and extract ONLY the strict JSON block
+OUTPUT=$(mvn test -B -q 2>&1 || true)
 
-# Pass through non-zero exit code if tests failed
-if [ -n "$exit_code" ]; then
-    exit "$exit_code"
+# Extract only the JSON block (from the first '{' of the report to the matching '}')
+echo "$OUTPUT" | awk '/^\{/{flag=1} flag{print} /^\}/{if(flag){flag=0}}' | head -n 35
+
+# 3. Determine pass/fail from JSON (if "Failed": 0, exit 0, else exit 1)
+if echo "$OUTPUT" | grep -q '"Failed": 0'; then
+    exit 0
+else
+    exit 1
 fi
-
