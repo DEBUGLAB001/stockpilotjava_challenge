@@ -21,7 +21,7 @@ while true; do
     CUR_SNAP=$(get_snap)
     if [ "$CUR_SNAP" != "$LAST_SNAP" ]; then
         echo "[Engine] Recompiling updated Java files..."
-        if mvn -q compile jar:jar -DskipTests; then
+        if mvn -q package -DskipTests; then
             kill -TERM "$PID" 2>/dev/null || true
             wait "$PID" 2>/dev/null || true
             java -jar target/app.jar &
