@@ -50,20 +50,6 @@ public class OrderService {
                 .orElseThrow(() -> new IllegalArgumentException("Order not found with number: " + orderNumber));
     }
 
-    /*
-     * INTENTIONAL BUG 5: Transaction boundary is missing on createOrder!
-     * (@Transactional is intentionally omitted on this method so partial inventory mutations
-     * persist in the database even if order creation subsequently fails/throws exception!)
-     * 
-     * INTENTIONAL BUG 1: Stock is checked but not reserved atomically!
-     * Check and reservation have an artificial race or non-atomic check, allowing concurrent
-     * requests to pass availableStock >= requested check before decrementing, leading to overselling.
-     * 
-     * CANDIDATE FIX:
-     * 1. Add @Transactional to createOrder(...)
-     * 2. Ensure atomic / synchronized or pessimistic reservation so concurrent orders cannot oversell.
-     */
-    // @Transactional <-- INTENTIONALLY OMITTED FOR BUG 5
     public Order createOrder(CreateOrderRequest request) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new IllegalArgumentException("Order must have at least one item");
@@ -85,13 +71,10 @@ public class OrderService {
             Inventory inventory = inventoryRepository.findByProductIdAndWarehouseId(product.getId(), warehouse.getId())
                     .orElseThrow(() -> new IllegalStateException("Inventory record missing for product " + product.getSku()));
 
-            // BUG 1: Stock is checked but not reserved atomically.
-            // Under concurrent access or simulated race, check passes without locking/synchronization:
             if (inventory.getAvailableStock() < itemDto.getQuantity()) {
                 throw new IllegalStateException("Insufficient stock for product " + product.getName() + " in warehouse " + warehouse.getName());
             }
 
-            // Artificial small yield/delay to make race condition reproducible under concurrency if tested
             try {
                 Thread.sleep(10);
             } catch (InterruptedException ignored) {}
@@ -113,7 +96,6 @@ public class OrderService {
 
         order.setTotalAmount(total);
 
-        // Simulation for BUG 5: If customer name is "FAIL_SIMULATION", throw an unexpected exception AFTER inventory was deducted!
         if ("FAIL_SIMULATION".equalsIgnoreCase(request.getCustomerName())) {
             throw new RuntimeException("Simulated order processing failure after inventory reservation");
         }

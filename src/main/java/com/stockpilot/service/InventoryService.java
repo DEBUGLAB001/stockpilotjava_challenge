@@ -73,26 +73,13 @@ public class InventoryService {
         return saved;
     }
 
-    /*
-     * INTENTIONAL BUG 2:
-     * Incorrect stock adjustment during cancellation:
-     * Cancelled orders do not restore available stock correctly.
-     * In the buggy code below, availableStock is DECREMENTED or left unchanged,
-     * while reserved stock is decremented, failing to restore available stock!
-     * 
-     * CANDIDATE FIX:
-     * Proper restoration should be:
-     * inventory.setReservedStock(inventory.getReservedStock() - quantity);
-     * inventory.setAvailableStock(inventory.getAvailableStock() + quantity);
-     */
     @Transactional
     public void releaseStockOnCancellation(Long productId, Long warehouseId, int quantity, String orderNumber) {
         Inventory inventory = inventoryRepository.findByProductIdAndWarehouseId(productId, warehouseId)
                 .orElseThrow(() -> new IllegalArgumentException("Inventory not found for product ID " + productId + " and warehouse ID " + warehouseId));
 
-        // BUGGY CODE: decrements availableStock instead of restoring it!
         inventory.setReservedStock(Math.max(0, inventory.getReservedStock() - quantity));
-        inventory.setAvailableStock(Math.max(0, inventory.getAvailableStock() - quantity)); // BUG! Should be + quantity
+        inventory.setAvailableStock(Math.max(0, inventory.getAvailableStock() - quantity));
 
         inventoryRepository.save(inventory);
 

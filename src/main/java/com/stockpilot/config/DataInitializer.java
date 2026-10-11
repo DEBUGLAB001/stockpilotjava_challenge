@@ -42,9 +42,6 @@ public class DataInitializer implements CommandLineRunner {
         Warehouse w3 = warehouseRepository.save(new Warehouse(null, "WH-LAX-03", "Los Angeles Pacific Hub", "Los Angeles, CA"));
 
         // Inventories
-        // Note: For Bug 3 demo/testing:
-        // LAPTOP-X1: NYC has 10 units, CHI has 50 units.
-        // A lookup for LAPTOP-X1 in CHI should return 50, but buggy query returns first match (NYC = 10)!
         inventoryRepository.save(new Inventory(null, p1, w1, 10, 0));
         inventoryRepository.save(new Inventory(null, p1, w2, 50, 0));
         inventoryRepository.save(new Inventory(null, p1, w3, 25, 0));

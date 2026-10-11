@@ -33,29 +33,17 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrder(orderNumber));
     }
 
-    /*
-     * INTENTIONAL BUG 4:
-     * Incorrect HTTP status or response mapping:
-     * When order creation fails with an exception (e.g., out of stock or bad request),
-     * instead of returning HTTP 400 Bad Request or 409 Conflict, it returns HTTP 200 OK
-     * with a misleading success response body or wraps failure in 200 OK!
-     * 
-     * CANDIDATE FIX:
-     * If request fails or has error, return proper status code:
-     * e.g. ResponseEntity.badRequest().body(...) or HttpStatus.BAD_REQUEST / HttpStatus.INTERNAL_SERVER_ERROR
-     */
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest request) {
         try {
             Order created = orderService.createOrder(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception ex) {
-            // BUG 4: Returning HTTP 200 OK on failure with error message, misleading clients/callers!
             Map<String, Object> errorPayload = new HashMap<>();
             errorPayload.put("success", false);
             errorPayload.put("status", "error");
             errorPayload.put("message", ex.getMessage());
-            return ResponseEntity.ok(errorPayload); // BUG! Should be ResponseEntity.badRequest().body(...)
+            return ResponseEntity.ok(errorPayload);
         }
     }
 

@@ -12,17 +12,6 @@ import java.util.Optional;
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
-    /*
-     * INTENTIONAL BUG 3:
-     * Missing or incorrect query condition in stock lookup:
-     * Stock lookup returns the wrong warehouse's inventory when lookupInventoryForWarehouse is called!
-     * 
-     * CANDIDATE FIX:
-     * Change:
-     * @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId AND (i.warehouse.id != :warehouseId OR :warehouseId IS NULL)")
-     * to:
-     * @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId AND i.warehouse.id = :warehouseId")
-     */
     @Query("SELECT i FROM Inventory i WHERE i.product.id = :productId AND (i.warehouse.id != :warehouseId OR :warehouseId IS NULL)")
     List<Inventory> findByProductIdAndWarehouseIdBuggy(@Param("productId") Long productId, @Param("warehouseId") Long warehouseId);
 
