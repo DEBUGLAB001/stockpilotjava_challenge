@@ -1,100 +1,107 @@
-# StockPilot — Inventory Management System (Java + Spring Boot Edition)
+# StockPilot
 
 ## Description
-StockPilot is an enterprise-grade, offline-capable inventory and order fulfillment backend service paired with an interactive real-time management dashboard. It runs as a self-contained Java 17 Spring Boot service backed by an in-memory H2 database on port 8080 (preview compatible with container reverse proxies and port 3000 mapping). The platform manages multi-warehouse inventory levels, customer order reservation workflows, cancellation restorations, and audit movement tracking.
+
+StockPilot is an offline-capable inventory and order fulfillment management platform built with Java 17, Spring Boot, and H2 database. It features multi-warehouse stock tracking, atomic order reservations, cancellation restorations, and audit movement logging.
 
 ## Repository Structure
-```
+
+```text
 demo-_challenge/
-├── pom.xml                                Maven build specification, dependencies, and Surefire test configuration
-├── challenge.json                         Challenge runtime, port, start, and test runner configuration
-├── README.md                              Candidate-facing application overview and bug reproduction guide
-├── AI.md                                  Challenge architecture, bug locations, and benchmark specification
-├── start.sh                               Container start script with automatic file watcher and JVM hot-reload
+├── challenge.json                         Runtime configuration, preview port, and test command
+├── pom.xml                                Maven build specification and Spring Boot dependencies
+├── README.md                              Application overview and challenge instructions
+├── AI.md                                  Architecture documentation, repository structure, and bug analysis
+├── start.sh                               Startup script launching the Spring Boot application server
 ├── tests/
-│   └── run_tests.sh                       Automated test runner recompiling code and executing test suite
+│   └── run_tests.sh                       Automated test runner executing JUnit 5 test suite
 └── src/
     ├── main/
     │   ├── java/com/stockpilot/
-    │   │   ├── StockPilotApplication.java Main Spring Boot application entrypoint
+    │   │   ├── StockPilotApplication.java Spring Boot application entry point
     │   │   ├── config/
-    │   │   │   └── DataInitializer.java   Deterministic in-memory catalog and warehouse stock fixture
+    │   │   │   └── DataInitializer.java   Database fixture seeding initial products, warehouses, and stock
     │   │   ├── controller/
-    │   │   │   ├── InventoryController.java REST API controller for inventory lookup, adjustment, and movements
-    │   │   │   └── OrderController.java   REST API controller for orders (Bug 4: HTTP status mapping)
+    │   │   │   ├── InventoryController.java REST API controller for inventory lookup and adjustments
+    │   │   │   └── OrderController.java   REST API controller for order creation and cancellation
     │   │   ├── dto/
-    │   │   │   ├── CreateOrderRequest.java DTO for customer order placement
-    │   │   │   └── StockAdjustmentRequest.java DTO for manual warehouse stock adjustments
+    │   │   │   ├── CreateOrderRequest.java Request payload DTO for order placement
+    │   │   │   └── StockAdjustmentRequest.java Request payload DTO for manual stock adjustment
     │   │   ├── model/
-    │   │   │   ├── Product.java           JPA entity for catalog products
-    │   │   │   ├── Warehouse.java         JPA entity for regional storage facilities
-    │   │   │   ├── Inventory.java         JPA entity for warehouse stock balances
-    │   │   │   ├── InventoryMovement.java JPA entity for audit movement logs
-    │   │   │   ├── Order.java             JPA entity for customer orders
-    │   │   │   └── OrderItem.java         JPA entity for order line items
+    │   │   │   ├── Inventory.java         Entity tracking available and reserved stock per warehouse
+    │   │   │   ├── InventoryMovement.java Entity logging stock adjustments and audit history
+    │   │   │   ├── Order.java             Entity representing customer orders and lifecycle status
+    │   │   │   ├── OrderItem.java         Entity representing individual order line items
+    │   │   │   ├── Product.java           Entity representing catalog products
+    │   │   │   └── Warehouse.java         Entity representing regional storage facilities
     │   │   ├── repository/
-    │   │   │   ├── ProductRepository.java Spring Data JPA repository for products
-    │   │   │   ├── WarehouseRepository.java Spring Data JPA repository for warehouses
-    │   │   │   ├── InventoryRepository.java Spring Data JPA repository (Bug 3: stock lookup query condition)
-    │   │   │   ├── InventoryMovementRepository.java Repository for movement audit ledger
-    │   │   │   └── OrderRepository.java   Spring Data JPA repository for orders
+    │   │   │   ├── InventoryMovementRepository.java Spring Data JPA repository for stock movement logs
+    │   │   │   ├── InventoryRepository.java Spring Data JPA repository for warehouse inventory records
+    │   │   │   ├── OrderRepository.java   Spring Data JPA repository for customer orders
+    │   │   │   ├── ProductRepository.java Spring Data JPA repository for catalog products
+    │   │   │   └── WarehouseRepository.java Spring Data JPA repository for warehouses
     │   │   └── service/
-    │   │       ├── InventoryService.java  Service for stock adjustments (Bug 2: cancellation restoration)
-    │   │       └── OrderService.java      Service for orders (Bug 1: atomic check, Bug 5: transaction boundary)
+    │   │       ├── InventoryService.java  Service handling inventory queries and cancellation returns
+    │   │       └── OrderService.java      Service handling order placement, transactions, and reservation
     │   └── resources/
-    │       ├── application.properties     Server port, H2 datasource, and logging levels
+    │       ├── application.properties     Spring Boot configuration and database settings
     │       └── static/
-    │           ├── index.html             Glassmorphic dashboard shell
-    │           ├── style.css              Dark theme CSS variables, glassmorphism, and responsive tables
-    │           └── app.js                 Client coordinator with live background state polling
+    │           ├── app.js                 Frontend state polling and user interface logic
+    │           ├── index.html             Dashboard view for inventory and order management
+    │           └── style.css              Dark-themed styles and dashboard UI layout
     └── test/
         ├── java/com/stockpilot/
-        │   ├── TestRunner.java            CLI test launcher invoking JUnit Platform
+        │   ├── TestRunner.java            CLI test runner emitting JSON test results
         │   └── test/
-        │       ├── StockPilotChallengeTests.java Automated JUnit 5 challenge test suite
-        │       └── StockPilotExecutionListener.java Custom listener emitting strict JSON telemetry
+        │       ├── StockPilotChallengeTests.java JUnit 5 integration tests covering challenge defects
+        │       └── StockPilotExecutionListener.java Custom test execution listener generating JSON output
         └── resources/
-            ├── logback-test.xml           Silences standard test logs so only JSON outputs to stdout
-            └── META-INF/services/org.junit.platform.launcher.TestExecutionListener TestExecutionListener SPI
+            ├── logback-test.xml           Logback test logging configuration
+            └── META-INF/services/org.junit.platform.launcher.TestExecutionListener TestExecutionListener SPI registration
 ```
 
 ## Bugs and Bug Locations
-These are the five behavioral bug surfaces covered by the challenge. The named locations identify the owning implementation areas for debugging and review.
 
 ### 1. Stock is checked but not reserved atomically
-- **Bug location**: `src/main/java/com/stockpilot/service/OrderService.java`, `createOrder`
-- **How to observe it**: Run concurrent order placement requests for the same product exceeding available capacity.
-- **Failure**: The availability check and deduction execute non-atomically without synchronization or pessimistic locking. Multiple concurrent orders simultaneously pass `availableStock >= requested`, decrementing the inventory and overselling beyond stock capacity.
-- **Expected**: Stock check and reservation occur atomically so that only requests with sufficient available stock succeed while subsequent concurrent requests fail cleanly.
+
+- **Bug location:** `src/main/java/com/stockpilot/service/OrderService.java`
+- **How to observe it:** Send concurrent order placement requests for the same product and warehouse where requested quantity exceeds available stock.
+- **Failure:** The availability check and stock reservation execute non-atomically without synchronization or pessimistic locking, allowing concurrent orders to both pass the check and oversell inventory.
+- **Expected:** Stock validation and deduction occur atomically so that only requests with sufficient stock succeed, preventing overselling.
 
 ### 2. Incorrect stock adjustment during cancellation
-- **Bug location**: `src/main/java/com/stockpilot/service/InventoryService.java`, `releaseStockOnCancellation`
-- **How to observe it**: Create an order, observe stock reservation, and then trigger `POST /api/orders/{orderNumber}/cancel`.
-- **Failure**: The cancellation logic decrements `availableStock` instead of restoring it (`Math.max(0, inventory.getAvailableStock() - quantity)`), reducing available stock further on cancellation.
-- **Expected**: Cancelling an order reduces `reservedStock` by the cancelled quantity and increments `availableStock` back by the same quantity.
+
+- **Bug location:** `src/main/java/com/stockpilot/service/InventoryService.java`
+- **How to observe it:** Place an order to reserve inventory and then cancel it via `POST /api/orders/{orderNumber}/cancel`.
+- **Failure:** Cancellation logic subtracts the quantity from available stock instead of adding it back, reducing available stock further upon cancellation.
+- **Expected:** Cancelling an order decrements reserved stock and increments available stock by the cancelled quantity.
 
 ### 3. Missing or incorrect query condition in stock lookup
-- **Bug location**: `src/main/java/com/stockpilot/repository/InventoryRepository.java`, `findByProductIdAndWarehouseIdBuggy` (invoked via `InventoryService.getInventory`)
-- **How to observe it**: Query `/api/inventory/lookup?productId={id}&warehouseId={id}` for a product stored in multiple warehouses.
-- **Failure**: The query condition does not filter by warehouse ID (`(i.warehouse.id != :warehouseId OR :warehouseId IS NULL)`), returning the inventory record of a different warehouse.
-- **Expected**: The query filters strictly by both `i.product.id = :productId AND i.warehouse.id = :warehouseId`, returning the exact warehouse record requested.
+
+- **Bug location:** `src/main/java/com/stockpilot/repository/InventoryRepository.java`
+- **How to observe it:** Call `/api/inventory/lookup` with a product ID and warehouse ID for a product stored in multiple warehouses.
+- **Failure:** The repository query filters only by product ID and omits the warehouse filter, returning an arbitrary inventory record from a different warehouse.
+- **Expected:** The query filters strictly by both product ID and warehouse ID, returning the inventory record for the requested warehouse.
 
 ### 4. Incorrect HTTP status or response mapping on order creation failure
-- **Bug location**: `src/main/java/com/stockpilot/controller/OrderController.java`, `createOrder`
-- **How to observe it**: Submit a `POST /api/orders` request with an invalid payload (e.g. empty item list `{"customerName": "Bob", "items": []}`).
-- **Failure**: The controller catches the exception and returns an `HTTP 200 OK` status with an error response body (`{"success": false, "status": "error"}`), misleading client applications and API proxies.
-- **Expected**: Failed validation and bad requests return an appropriate client error status (`HTTP 400 Bad Request`).
+
+- **Bug location:** `src/main/java/com/stockpilot/controller/OrderController.java`
+- **How to observe it:** Send a `POST /api/orders` request with an invalid payload such as an empty item list.
+- **Failure:** The controller catches the validation exception and returns `HTTP 200 OK` with an error message in the response body.
+- **Expected:** Invalid requests and order processing errors return `HTTP 400 Bad Request`.
 
 ### 5. Transaction boundary is missing or incorrectly placed
-- **Bug location**: `src/main/java/com/stockpilot/service/OrderService.java`, `createOrder`
-- **How to observe it**: Place an order that encounters a simulated downstream processing exception after inventory deduction.
-- **Failure**: `@Transactional` is missing on `createOrder`. When order creation throws an exception after stock deduction, the partial database mutations remain committed and unrolled, resulting in lost stock.
-- **Expected**: Adding `@Transactional` to `createOrder` ensures the entire operation is atomic; any unhandled runtime exception causes all preceding inventory modifications to roll back completely.
+
+- **Bug location:** `src/main/java/com/stockpilot/service/OrderService.java`
+- **How to observe it:** Submit an order request that triggers a downstream processing exception after inventory deduction.
+- **Failure:** The order creation method lacks `@Transactional`, causing inventory deductions to remain committed even when the overall order placement fails.
+- **Expected:** The order placement method runs within a transaction so any downstream failure rolls back all inventory modifications.
 
 ## Expected Behaviour After Fixing All Bugs
-- Concurrent orders cannot oversell available warehouse inventory.
-- Cancelling an order accurately restores available stock and resets reserved units.
-- Stock lookups by product and warehouse return the inventory specific to the requested warehouse.
-- Invalid order submissions return `HTTP 400 Bad Request`.
-- If order processing fails mid-transaction, database modifications roll back without leaving orphan reservations.
-- Running `./tests/run_tests.sh` (or `./mvnw test -B -q`) passes all 5 tests, prints strict JSON telemetry to stdout, and exits with code 0.
+
+- Concurrent order requests cannot oversell warehouse stock beyond available inventory.
+- Cancelling an order restores available stock and clears reserved stock.
+- Inventory lookups by product and warehouse return the exact warehouse stock record requested.
+- Invalid order requests return `HTTP 400 Bad Request` instead of `HTTP 200 OK`.
+- Unhandled order processing exceptions roll back all database modifications atomically.
+- Running `./tests/run_tests.sh` executes all 5 integration tests successfully with exit code 0.
