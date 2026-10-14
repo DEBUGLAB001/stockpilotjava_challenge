@@ -72,11 +72,11 @@ public class StockPilotChallengeTests {
 
         for (int i = 0; i < threadCount; i++) {
             final int id = i;
+            final CreateOrderRequest req = new CreateOrderRequest("Customer-" + id,
+                    List.of(new CreateOrderRequest.OrderItemDto(p.getId(), w.getId(), 4)));
             futures.add(executor.submit(() -> {
                 try {
                     barrier.await();
-                    CreateOrderRequest req = new CreateOrderRequest("Customer-" + id,
-                            List.of(new CreateOrderRequest.OrderItemDto(p.getId(), w.getId(), 4)));
                     orderService.createOrder(req);
                     return true;
                 } catch (Exception e) {

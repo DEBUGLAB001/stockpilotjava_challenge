@@ -76,7 +76,7 @@ public class OrderService {
             }
 
             try {
-                Thread.sleep(10);
+                Thread.sleep(100);
             } catch (InterruptedException ignored) {}
 
             // Deduct available, add to reserved
